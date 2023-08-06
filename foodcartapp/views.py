@@ -3,7 +3,7 @@ from django.templatetags.static import static
 from .models import Product, Order, OrderProducts
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-import json
+from rest_framework import status
 
 
 def banners_list_api(request):
@@ -58,11 +58,28 @@ def product_list_api(request):
     })
 
 
+def check_valid_data(order_details: dict):
+    if 'products' not in order_details.keys():
+        error_message = "products key not presented."
+        return {"detail": error_message}
+    elif not isinstance(order_details['products'], list):
+        error_message= "products value is not list."
+        return {"detail": error_message}
+    elif not order_details['products']:
+        error_message = "products value cannot be empty."
+        return {"detail": error_message}
+    else:
+        return False
+
+
 @api_view(['POST'])
 def register_order(request):
     try:
         order_details = request.data
-        print(order_details)
+        wrong_data = check_valid_data(order_details)
+        if wrong_data:
+            return Response(wrong_data, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
         order_object = Order.objects.create(
             first_name=order_details['firstname'],
             last_name=order_details['lastname'],
