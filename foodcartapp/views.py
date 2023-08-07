@@ -17,11 +17,12 @@ class OrderProductsSerializer(ModelSerializer):
 
 
 class OrderSerializer(ModelSerializer):
-    products = OrderProductsSerializer(many=True)
+    products = OrderProductsSerializer(many=True, write_only=True)
 
     class Meta:
         model = Order
         fields = [
+            "id",
             "products",
             "firstname",
             "lastname",
@@ -98,4 +99,4 @@ def register_order(request):
     order_products = [OrderProducts(order=order_object, **fields) for fields in products]
     OrderProducts.objects.bulk_create(order_products)
 
-    return Response(request.data, status=status.HTTP_201_CREATED)
+    return Response(OrderSerializer(instance=order_object).data, status=status.HTTP_201_CREATED)
