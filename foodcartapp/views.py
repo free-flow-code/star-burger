@@ -4,7 +4,30 @@ from .models import Product, Order, OrderProducts
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-import phonenumbers
+from rest_framework.serializers import ModelSerializer
+
+
+class OrderProductsSerializer(ModelSerializer):
+    class Meta:
+        model = OrderProducts
+        fields = [
+            "product",
+            "quantity"
+        ]
+
+
+class OrderSerializer(ModelSerializer):
+    products = OrderProductsSerializer(many=True)
+
+    class Meta:
+        model = Order
+        fields = [
+            "products",
+            "firstname",
+            "lastname",
+            "phonenumber",
+            "address"
+        ]
 
 
 def banners_list_api(request):
@@ -59,66 +82,20 @@ def product_list_api(request):
     })
 
 
-def check_valid_data(order_details: dict):
-    keys = [
-        "products",
-        "firstname",
-        "lastname",
-        "phonenumber",
-        "address"
-    ]
-    error_message = ''
-
-    for key in keys:
-        if key not in order_details.keys():
-            error_message = f"{key} key not presented."
-            return {"detail": error_message}
-        elif not order_details[key]:
-            error_message = f"{key} value cannot be empty."
-            return {"detail": error_message}
-
-    if not isinstance(order_details['products'], list):
-        error_message = "products value is not a valid list."
-        return {"detail": error_message}
-    for product in order_details['products']:
-        if not Product.objects.filter(pk=product["product"]).exists():
-            return {"detail": f"invalid primary key {product['product']}"}
-
-    for key in keys[1:]:
-        if not isinstance(order_details[key], str):
-            error_message = f"{key} value is not a valid string."
-            return {"detail": error_message}
-
-    phone = phonenumbers.parse(order_details["phonenumber"], None)
-    if not phonenumbers.is_valid_number(phone):
-        return {"detail": "not a valid phone number"}
-
-
 @api_view(['POST'])
 def register_order(request):
-    try:
-        order_details = request.data
-        wrong_data = check_valid_data(order_details)
-        if wrong_data:
-            return Response(wrong_data, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    serializer = OrderSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
 
-        order_object = Order.objects.create(
-            first_name=order_details['firstname'],
-            last_name=order_details['lastname'],
-            address=order_details['address'],
-            phone=order_details['phonenumber']
-        )
+    order_object = Order.objects.create(
+        firstname=serializer.validated_data['firstname'],
+        lastname=serializer.validated_data['lastname'],
+        address=serializer.validated_data['address'],
+        phonenumber=serializer.validated_data['phonenumber']
+    )
+    print(serializer.validated_data['products'])
+    products = serializer.validated_data['products']
+    order_products = [OrderProducts(order=order_object, **fields) for fields in products]
+    OrderProducts.objects.bulk_create(order_products)
 
-        for product in order_details['products']:
-            order_products_object = OrderProducts.objects.create(
-                order=order_object,
-                product=Product.objects.get(pk=product['product']),
-                quantity=product['quantity']
-            )
-
-        return Response(order_details)
-
-    except ValueError:
-        return Response({
-            'error': 'ValueError',
-        })
+    return Response(request.data, status=status.HTTP_201_CREATED)
