@@ -4,6 +4,7 @@ from .models import Product, Order, OrderProducts
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
+import phonenumbers
 
 
 def banners_list_api(request):
@@ -59,17 +60,38 @@ def product_list_api(request):
 
 
 def check_valid_data(order_details: dict):
-    if 'products' not in order_details.keys():
-        error_message = "products key not presented."
+    keys = [
+        "products",
+        "firstname",
+        "lastname",
+        "phonenumber",
+        "address"
+    ]
+    error_message = ''
+
+    for key in keys:
+        if key not in order_details.keys():
+            error_message = f"{key} key not presented."
+            return {"detail": error_message}
+        elif not order_details[key]:
+            error_message = f"{key} value cannot be empty."
+            return {"detail": error_message}
+
+    if not isinstance(order_details['products'], list):
+        error_message = "products value is not a valid list."
         return {"detail": error_message}
-    elif not isinstance(order_details['products'], list):
-        error_message= "products value is not list."
-        return {"detail": error_message}
-    elif not order_details['products']:
-        error_message = "products value cannot be empty."
-        return {"detail": error_message}
-    else:
-        return False
+    for product in order_details['products']:
+        if not Product.objects.filter(pk=product["product"]).exists():
+            return {"detail": f"invalid primary key {product['product']}"}
+
+    for key in keys[1:]:
+        if not isinstance(order_details[key], str):
+            error_message = f"{key} value is not a valid string."
+            return {"detail": error_message}
+
+    phone = phonenumbers.parse(order_details["phonenumber"], None)
+    if not phonenumbers.is_valid_number(phone):
+        return {"detail": "not a valid phone number"}
 
 
 @api_view(['POST'])
