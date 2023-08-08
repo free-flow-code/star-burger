@@ -5,13 +5,12 @@ from phonenumber_field.modelfields import PhoneNumberField
 
 class OrderQuerySet(models.QuerySet):
 
-    def calculate_total_cost(self):
-        return (
-            OrderProducts.objects
-            .select_related('product')
-            .annotate(total_cost=models.Sum(models.F('product__price') * models.F('quantity')))
-            .order_by('id')
-        )
+    def add_total_cost(self):
+        return (self.annotate(
+                total_cost=models.Sum(models.F('product__price') * models.F('product__quantity'))
+                )
+                .order_by('id')
+                )
 
 
 class Restaurant(models.Model):
@@ -186,6 +185,12 @@ class OrderProducts(models.Model):
         on_delete=models.CASCADE
     )
     quantity = models.PositiveIntegerField(verbose_name="количество")
+    price = models.DecimalField(
+        verbose_name="цена",
+        max_digits=6,
+        decimal_places=2,
+        validators=[MinValueValidator(0)]
+    )
 
     class Meta:
         verbose_name = "элемент заказа"
