@@ -35,6 +35,7 @@ class OrderAdmin(admin.ModelAdmin):
     inlines = [
         OrderProductsItemInline
     ]
+    readonly_fields = ['registered_at']
 
     def response_post_save_change(self, request, obj):
         response = super(OrderAdmin, self).response_post_save_change(request, obj)

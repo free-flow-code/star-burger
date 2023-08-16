@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 from django.core.validators import MinValueValidator
 from phonenumber_field.modelfields import PhoneNumberField
 from django.utils.translation import gettext_lazy as _
@@ -179,6 +180,21 @@ class Order(models.Model):
     comment = models.TextField(
         blank=True,
         verbose_name="комментарий"
+    )
+    registered_at = models.DateTimeField(
+        verbose_name="зарегистрирован",
+        default=timezone.now,
+        db_index=True
+    )
+    called_at = models.DateTimeField(
+        verbose_name="дата звонка",
+        blank=True,
+        null=True
+    )
+    delivered_at = models.DateTimeField(
+        verbose_name='дата доставки',
+        blank=True,
+        null=True
     )
     objects = OrderQuerySet.as_manager()
 
