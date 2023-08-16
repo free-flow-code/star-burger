@@ -1,6 +1,7 @@
 from django.db import models
 from django.core.validators import MinValueValidator
 from phonenumber_field.modelfields import PhoneNumberField
+from django.utils.translation import gettext_lazy as _
 
 
 class OrderQuerySet(models.QuerySet):
@@ -135,6 +136,20 @@ class RestaurantMenuItem(models.Model):
 
 
 class Order(models.Model):
+    class Status(models.TextChoices):
+        UNPROCESSED = "UN", _("Необработанный")
+        RESTAURANT = "RS", _("Передан в ресторан")
+        DELIVERY = "DL", _("Доставляется")
+        COMPLETED = "OK", _("Выполнен")
+
+    status = models.CharField(
+        verbose_name="статус",
+        max_length=2,
+        choices=Status.choices,
+        default=Status.UNPROCESSED,
+        db_index=True
+    )
+
     products = models.ManyToManyField(
         Product,
         verbose_name="товары",
