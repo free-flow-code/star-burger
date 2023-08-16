@@ -143,6 +143,10 @@ class Order(models.Model):
         DELIVERY = "DL", _("Доставляется")
         COMPLETED = "OK", _("Выполнен")
 
+    class PaymentMethod(models.TextChoices):
+        CASH = "CH", _("Наличными")
+        TRANSFER = "TF", _("Переводом")
+
     status = models.CharField(
         verbose_name="статус",
         max_length=2,
@@ -150,7 +154,13 @@ class Order(models.Model):
         default=Status.UNPROCESSED,
         db_index=True
     )
-
+    payment_method = models.CharField(
+        verbose_name="способ оплаты",
+        max_length=2,
+        choices=PaymentMethod.choices,
+        default=PaymentMethod.CASH,
+        db_index=True
+    )
     products = models.ManyToManyField(
         Product,
         verbose_name="товары",
@@ -192,15 +202,15 @@ class Order(models.Model):
         null=True
     )
     delivered_at = models.DateTimeField(
-        verbose_name='дата доставки',
+        verbose_name="дата доставки",
         blank=True,
         null=True
     )
     objects = OrderQuerySet.as_manager()
 
     class Meta:
-        verbose_name = 'заказ'
-        verbose_name_plural = 'заказы'
+        verbose_name = "заказ"
+        verbose_name_plural = "заказы"
 
     def __str__(self):
         return f"{self.firstname} {self.lastname} - {self.address}"
