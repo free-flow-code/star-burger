@@ -9,10 +9,31 @@ class OrderQuerySet(models.QuerySet):
 
     def add_total_cost(self):
         return (self.annotate(
-                total_cost=models.Sum(models.F('product__price') * models.F('product__quantity'))
-                )
+            total_cost=models.Sum(models.F("product__price") * models.F("product__quantity"))
+        )
                 .order_by('id')
                 )
+
+    def fetch_restaurants(self):
+        for order in self:
+            if not order.restaurant and order.status == "UN":
+                order_restaurants = []
+                for product in order.products.all():
+                    product_restaurants = RestaurantMenuItem.objects \
+                        .filter(product=product, availability=True) \
+                        .prefetch_related('restaurant') \
+                        .order_by('product') \
+                        .values_list('restaurant_id')
+
+                    for restaurant in product_restaurants:
+                        order_restaurants.append(*restaurant)
+                order.restaurants.set(order_restaurants)
+            else:
+                order_object = Order.objects.get(pk=order.pk)
+                order_object.status = "RS"
+                order_object.save(update_fields=["status"])
+
+        return self
 
 
 class Restaurant(models.Model):
@@ -186,6 +207,18 @@ class Order(models.Model):
         verbose_name="телефон",
         max_length=20,
         db_index=True
+    )
+    restaurant = models.ForeignKey(
+        Restaurant,
+        verbose_name="готовит ресторан",
+        related_name="orders",
+        blank=True,
+        null=True,
+        on_delete=models.CASCADE
+    )
+    restaurants = models.ManyToManyField(
+        Restaurant,
+        verbose_name="рестораны, которые могут приготовить"
     )
     comment = models.TextField(
         blank=True,
