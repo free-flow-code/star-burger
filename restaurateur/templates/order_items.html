@@ -41,7 +41,16 @@
               <summary>Может быть приготовлен ресторанами:</summary>
               <ul>
                 {% for restaurant in item.restaurants.all %}
-                  <li>{{ restaurant }}</li>
+                  <li>{{ restaurant }} -</li>
+                  {% for order_id, rests in order_distances.items %}
+                    {% ifequal item.id|slugify order_id  %}
+                      {% for rest_id, distance in rests.items %}
+                        {% ifequal restaurant.id|slugify rest_id  %}
+                          {{ distance }}
+                        {% endifequal %}
+                      {% endfor %}
+                    {% endifequal %}
+                  {% endfor %}
                 {% endfor %}
               </ul>
             </details>

@@ -119,6 +119,7 @@ INTERNAL_IPS = [
     '127.0.0.1'
 ]
 
+YANDEX_API_KEY = env.str('YANDEX_API_KEY')
 
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "assets"),

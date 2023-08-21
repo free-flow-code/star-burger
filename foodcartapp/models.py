@@ -1,8 +1,12 @@
+import requests.exceptions
 from django.db import models
 from django.utils import timezone
+from django.conf import settings
 from django.core.validators import MinValueValidator
 from phonenumber_field.modelfields import PhoneNumberField
 from django.utils.translation import gettext_lazy as _
+from .yandex_geo_funcs import fetch_coordinates
+from geopy import distance
 
 
 class OrderQuerySet(models.QuerySet):
@@ -10,30 +14,39 @@ class OrderQuerySet(models.QuerySet):
     def add_total_cost(self):
         return (self.annotate(
             total_cost=models.Sum(models.F("product__price") * models.F("product__quantity"))
-        )
-                .order_by('id')
-                )
+        ).order_by('id'))
 
     def fetch_restaurants(self):
+        distances = {}
         for order in self:
             if not order.restaurant and order.status == "UN":
                 order_restaurants = []
-                for product in order.products.all():
-                    product_restaurants = RestaurantMenuItem.objects \
-                        .filter(product=product, availability=True) \
-                        .prefetch_related('restaurant') \
-                        .order_by('product') \
-                        .values_list('restaurant_id')
+                distances[f"{order.pk}"] = {}
 
-                    for restaurant in product_restaurants:
-                        order_restaurants.append(*restaurant)
-                order.restaurants.set(order_restaurants)
+                try:
+                    for product in order.products.all():
+                        product_items = RestaurantMenuItem.objects \
+                            .filter(product=product, availability=True) \
+                            .prefetch_related('restaurant') \
+                            .order_by('product') \
+
+                        for item in product_items:
+                            order_restaurants.append(item.restaurant.pk)
+                            distances[f"{order.pk}"][f"{item.restaurant.pk}"] = "%.2f" % distance.distance(
+                                fetch_coordinates(settings.YANDEX_API_KEY, order.address),
+                                fetch_coordinates(settings.YANDEX_API_KEY, item.restaurant.address)
+                            ).km
+                except requests.exceptions.HTTPError as err:
+                    print(err)
+                finally:
+                    order.restaurants.set(order_restaurants)
+
             else:
                 order_object = Order.objects.get(pk=order.pk)
                 order_object.status = "RS"
                 order_object.save(update_fields=["status"])
 
-        return self
+        return self, distances
 
 
 class Restaurant(models.Model):
