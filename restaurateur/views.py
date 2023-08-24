@@ -91,8 +91,7 @@ def view_restaurants(request):
 def view_orders(request):
     orders, distances = Order.objects \
         .add_total_cost() \
-        .fetch_restaurants() \
-        #.order_by("-status", "registered_at")
+        .fetch_restaurants()
 
     return render(request, template_name="order_items.html", context={
         "order_items": orders,

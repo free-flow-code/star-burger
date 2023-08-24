@@ -1,12 +1,12 @@
 import requests.exceptions
 from django.db import models
-from django.utils import timezone
 from django.conf import settings
+from django.utils import timezone
 from django.core.validators import MinValueValidator
 from phonenumber_field.modelfields import PhoneNumberField
 from django.utils.translation import gettext_lazy as _
-from .yandex_geo_funcs import fetch_coordinates
 from geopy import distance
+from coords.models import Place
 
 
 class OrderQuerySet(models.QuerySet):
@@ -14,7 +14,7 @@ class OrderQuerySet(models.QuerySet):
     def add_total_cost(self):
         return (self.annotate(
             total_cost=models.Sum(models.F("product__price") * models.F("product__quantity"))
-        ).order_by('id'))
+        ).order_by("-status", "registered_at", "id"))
 
     def fetch_restaurants(self):
         distances = {}
@@ -23,23 +23,20 @@ class OrderQuerySet(models.QuerySet):
                 order_restaurants = []
                 distances[f"{order.pk}"] = {}
 
-                try:
-                    for product in order.products.all():
-                        product_items = RestaurantMenuItem.objects \
-                            .filter(product=product, availability=True) \
-                            .prefetch_related('restaurant') \
-                            .order_by('product') \
+                for product in order.products.all():
+                    product_items = RestaurantMenuItem.objects \
+                        .filter(product=product, availability=True) \
+                        .prefetch_related('restaurant') \
+                        .order_by('product') \
 
-                        for item in product_items:
-                            order_restaurants.append(item.restaurant.pk)
-                            distances[f"{order.pk}"][f"{item.restaurant.pk}"] = "%.2f" % distance.distance(
-                                fetch_coordinates(settings.YANDEX_API_KEY, order.address),
-                                fetch_coordinates(settings.YANDEX_API_KEY, item.restaurant.address)
-                            ).km
-                except requests.exceptions.HTTPError as err:
-                    print(err)
-                finally:
-                    order.restaurants.set(order_restaurants)
+                    for item in product_items:
+                        order_restaurants.append(item.restaurant.pk)
+                        distances[f"{order.pk}"][f"{item.restaurant.pk}"] = "%.2f" % distance.distance(
+                            Place.objects.get_coordinates(order.address),
+                            Place.objects.get_coordinates(item.restaurant.address)
+                        ).km
+
+                order.restaurants.set(order_restaurants)
 
             else:
                 order_object = Order.objects.get(pk=order.pk)
