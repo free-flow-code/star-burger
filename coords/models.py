@@ -33,10 +33,12 @@ class Place(models.Model):
     lon = models.FloatField(
         'Долгота',
         null=True,
+        blank=True
     )
     lat = models.FloatField(
         'Широта',
-        null=True
+        null=True,
+        blank=True
     )
     created_at = models.DateTimeField(
         'Дата создания',
