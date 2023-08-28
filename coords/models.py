@@ -18,7 +18,7 @@ class PlaceQuerySet(models.QuerySet):
                 place.created_at = timezone.now()
                 place.save()
                 return place.lon, place.lat
-        except requests.exceptions.HTTPError as err:
+        except requests.exceptions.RequestException as err:
             print(err)
 
         return place.lon, place.lat
