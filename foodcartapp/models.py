@@ -2,7 +2,7 @@ import requests.exceptions
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
 from phonenumber_field.modelfields import PhoneNumberField
 from django.utils.translation import gettext_lazy as _
 from geopy import distance
@@ -272,7 +272,13 @@ class OrderProducts(models.Model):
         related_name="order",
         on_delete=models.CASCADE
     )
-    quantity = models.PositiveIntegerField(verbose_name="количество")
+    quantity = models.PositiveIntegerField(
+        verbose_name="количество",
+        validators=[
+            MinValueValidator(1),
+            MaxValueValidator(99)
+        ]
+    )
     price = models.DecimalField(
         verbose_name="цена",
         max_digits=6,
