@@ -14,6 +14,13 @@ class OrderProductsSerializer(ModelSerializer):
 class OrderSerializer(ModelSerializer):
     products = OrderProductsSerializer(many=True, write_only=True)
 
+    def create(self, validated_data):
+        products = validated_data.pop('products')
+        order = Order.objects.create(**validated_data)
+        for order_product in products:
+            OrderProducts.objects.create(order=order, **order_product, price=order_product['product'].price)
+        return order
+
     class Meta:
         model = Order
         fields = [
