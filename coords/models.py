@@ -3,6 +3,7 @@ from django.db import models
 from django.utils import timezone
 from django.conf import settings
 from .yandex_geo_funcs import fetch_coordinates
+import logging
 
 
 class PlaceQuerySet(models.QuerySet):
@@ -18,8 +19,8 @@ class PlaceQuerySet(models.QuerySet):
                 place.created_at = timezone.now()
                 place.save()
                 return place.lon, place.lat
-        except requests.exceptions.RequestException as err:
-            print(err)
+        except Exception as err:
+            logging.exception(err)
 
         return place.lon, place.lat
 
