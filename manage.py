@@ -2,9 +2,13 @@
 """Django's command-line utility for administrative tasks."""
 import os
 import sys
+import logging
 
 
 def main():
+    logging.basicConfig(level=logging.INFO, filename=f"{__name__}.log", filemode="w",
+                        format="%(asctime)s %(levelname)s %(message)s")
+
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'star_burger.settings')
     try:
         from django.core.management import execute_from_command_line
