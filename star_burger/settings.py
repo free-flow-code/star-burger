@@ -1,7 +1,6 @@
 import os
-
 import dj_database_url
-
+from django.core.management.utils import get_random_secret_key
 from environs import Env
 
 
@@ -12,7 +11,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 
-SECRET_KEY = env('SECRET_KEY')
+SECRET_KEY = env('SECRET_KEY', get_random_secret_key())
 DEBUG = env.bool('DEBUG', False)
 
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', ['127.0.0.1', 'localhost'])
@@ -92,10 +91,16 @@ WSGI_APPLICATION = 'star_burger.wsgi.application'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
+DB_URL = dj_database_url.parse(env('DB_URL'))
 DATABASES = {
-    'default': dj_database_url.config(
-        default='sqlite:////{0}'.format(os.path.join(BASE_DIR, 'db.sqlite3'))
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': DB_URL['NAME'],
+        'USER': DB_URL['USER'],
+        'PASSWORD': DB_URL['PASSWORD'],
+        'HOST': DB_URL['HOST'],
+        'PORT': DB_URL['PORT'],
+    }
 }
 
 AUTH_PASSWORD_VALIDATORS = [
