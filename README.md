@@ -1,5 +1,7 @@
 # Сайт доставки еды Star Burger
 
+Ссылка на сайт: https://free-flow-code.ru/
+
 Это сайт сети ресторанов Star Burger. Здесь можно заказать превосходные бургеры с доставкой на дом.
 
 ![скриншот сайта](https://dvmn.org/filer/canonical/1594651635/686/)
@@ -79,6 +81,50 @@ python manage.py runserver
 
 Откройте сайт в браузере по адресу [http://127.0.0.1:8000/](http://127.0.0.1:8000/). Если вы увидели пустую белую страницу, то не пугайтесь, выдохните. Просто фронтенд пока ещё не собран. Переходите к следующему разделу README.
 
+## Настройка Rollbar
+
+Создайте аккаунт в [Rollbar](https://rollbar.com) и создайте новый проект. Выбирайте Django как свою SDK и в результате вы получите строки кода, которые нужно вставить в settings.py своего проекта для интеграции Rollbar. У нас он уже установлен и настроен, вам осталось только скопировать 'access token' в файл .env в переменную ROLLBAR (см. далее).
+
+## Настройка PostreSQL
+
+Установите psycopg2, для того что бы можно было пользоваться базой данной PostreSQL:
+```sh
+pip install django psycopg2
+````
+Установите [PostgreSQL](https://www.postgresql.org/download/). На сервере для установки используйте команду:
+```sh
+sudo apt-get install python-pip python-dev libpq-dev postgresql postgresql-contrib
+```
+Смените пользователя и запустите shell сессию:
+```sh
+sudo su - postgres
+psql
+```
+Создайте новую базу данных и пользователя с паролем:
+```sql
+CREATE DATABASE myproject;
+CREATE USER myprojectuser WITH PASSWORD 'password';
+```
+Установите несколько полезных настроек (кодировка, чтение, временная зона):
+```sql
+ALTER ROLE myprojectuser SET client_encoding TO 'utf8';
+ALTER ROLE myprojectuser SET default_transaction_isolation TO 'read committed';
+ALTER ROLE myprojectuser SET timezone TO 'UTC';
+```
+Выдайте юзеру права и завершите работу shell сессии:
+```sql
+GRANT ALL PRIVILEGES ON DATABASE myproject TO myprojectuser;
+\q
+exit
+```
+
+Если хотите перенести существующую базу данных sqlite3 в PostrgeSQL используйте команды:
+```sh
+python3 manage.py dump > file.json
+python3 manage.py load file.json
+```
+Если возникнет `Unicode Error` при использовании `load`, смените кодировку `file.json` любым способом на `utf-8`.
+
 ### Собрать фронтенд
 
 **Откройте новый терминал**. Для работы сайта в dev-режиме необходима одновременная работа сразу двух программ `runserver` и `parcel`. Каждая требует себе отдельного терминала. Чтобы не выключать `runserver` откройте для фронтенда новый терминал и все нижеследующие инструкции выполняйте там.
@@ -147,8 +193,6 @@ Parcel будет следить за файлами в каталоге `bundle
 ```sh
 ./node_modules/.bin/parcel build bundles-src/index.js --dist-dir bundles --public-url="./"
 ```
-В качестве системы логгирования используется Rollbar. Токен можно получить
-по [ссылке](https://rollbar.com/).
 
 Настроить бэкенд: создать файл `.env` в каталоге `star_burger/` со следующими настройками:
 
@@ -158,6 +202,13 @@ Parcel будет следить за файлами в каталоге `bundle
 - `ALLOWED_HOSTS` — [см. документацию Django](https://docs.djangoproject.com/en/3.1/ref/settings/#allowed-hosts)
 - `ROLLER_TOKEN` - токен доступа rollbar
 - `ROLLBAR_ENV` - название окружения rollbar
+
+## Как быстро обновить prod-версию сайта
+
+На сервере клонируйте код проекта в папку `/opt`. В корне проекта есть скрипт`star-burger-deploy.sh`, который при запуске обновляет сайт. Переместите его в "Home/<ваш-пользователь>" для быстрого запуска сразу после входа на сервер. У пользователя должны быть права sudo.
+
+Файл запускается командой: `./star-burger-deploy.sh`.
+
 
 ## Цели проекта
 
