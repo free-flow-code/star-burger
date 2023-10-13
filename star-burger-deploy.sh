@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -e
 cd /opt/star-burger
+git stash
 git pull star-burger master
 echo -e "\e[1;32m Files updated.\e[0m"
 eval "$(pyenv init -)"
@@ -13,13 +14,14 @@ python3 manage.py collectstatic --noinput
 echo -e "\e[1;32m Frontend updated.\e[0m"
 python3 manage.py migrate --noinput
 echo -e "\e[1;32m Migrations applied.\e[0m"
-systemctl daemon-reload
-echo -e "\e[1;32m Systemd reloaded.\e[0m"
 systemctl restart star-burger.service
-echo -e "\e[1;32m Starburger restarted.\e[0m"
+echo -e "\e[1;32m Star-burger restarted.\e[0m"
 systemctl reload nginx.service
 echo -e "\e[1;32m Nginx reloaded.\e[0m"
-curl -X POST https://api.rollbar.com/api/1/deploy \
+if [ "${ROLLBAR_TOKEN}" ] && [ "${ROLLBAR_ENV}" ];
+then
+  curl -X POST https://api.rollbar.com/api/1/deploy \
         -H "X-Rollbar-Access-Token: $ROLLBAR_TOKEN" \
         -d "environment=$ROLLBAR_ENV&revision=$(git rev-parse HEAD)"
+fi
 echo -e "\e[1;32m Success!\e[0m"
