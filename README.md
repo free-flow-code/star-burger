@@ -200,6 +200,8 @@ Parcel будет следить за файлами в каталоге `bundle
 - `SECRET_KEY` — секретный ключ проекта. Он отвечает за шифрование на сайте. Например, им зашифрованы все пароли на вашем сайте.
 - `DB_URL`=url для доступа к базе данных PostgreSQL. Должен иметь вид "postgres://USER:PASSWORD@HOST:PORT/NAME". Например postgres://postgres:qwerty@localhost:5432/mydb
 - `ALLOWED_HOSTS` — [см. документацию Django](https://docs.djangoproject.com/en/3.1/ref/settings/#allowed-hosts)
+-
+Две **необязательных** переменных для сервиса логгирования Rollbar:
 - `ROLLER_TOKEN` - токен доступа rollbar
 - `ROLLBAR_ENV` - название окружения rollbar
 

@@ -1,7 +1,7 @@
 import os
 import dj_database_url
 from django.core.management.utils import get_random_secret_key
-from environs import Env
+from environs import Env, EnvError
 
 
 env = Env()
@@ -13,8 +13,17 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 SECRET_KEY = env('SECRET_KEY', get_random_secret_key())
 DEBUG = env.bool('DEBUG', False)
-
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', ['127.0.0.1', 'localhost'])
+
+try:
+    ROLLBAR = {
+        'access_token': env.str('ROLLBAR_TOKEN'),
+        'environment': env.str('ROLLBAR_ENV'),
+        'code_version': '1.0',
+        'root': BASE_DIR,
+    }
+except EnvError:
+    pass
 
 INSTALLED_APPS = [
     'foodcartapp.apps.FoodcartappConfig',
@@ -78,13 +87,6 @@ TEMPLATES = [
         },
     },
 ]
-
-ROLLBAR = {
-    'access_token': env.str('ROLLBAR_TOKEN'),
-    'environment': env.str('ROLLBAR_ENV'),
-    'code_version': '1.0',
-    'root': BASE_DIR,
-}
 
 WSGI_APPLICATION = 'star_burger.wsgi.application'
 
