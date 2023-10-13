@@ -93,16 +93,12 @@ WSGI_APPLICATION = 'star_burger.wsgi.application'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
-DB_URL = dj_database_url.parse(env('DB_URL'))
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': DB_URL['NAME'],
-        'USER': DB_URL['USER'],
-        'PASSWORD': DB_URL['PASSWORD'],
-        'HOST': DB_URL['HOST'],
-        'PORT': DB_URL['PORT'],
-    }
+    'default': dj_database_url.config(
+        default=env('DB_URL'),
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 }
 
 AUTH_PASSWORD_VALIDATORS = [
