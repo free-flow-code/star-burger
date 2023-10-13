@@ -8,10 +8,9 @@ eval "$(pyenv init -)"
 pyenv activate venv
 pip3 install -r requirements.txt
 echo -e "\e[1;32m Requirements updated.\e[0m"
-npm install --dev
 .node_modules/.bin/parcel build bundles-src/index.js --dist-dir bundles --public-url="./"
 python3 manage.py collectstatic --noinput
-echo -e "\e[1;32m Frontend updated.\e[0m"
+echo -e "\e[1;32m Frontend collected.\e[0m"
 python3 manage.py migrate --noinput
 echo -e "\e[1;32m Migrations applied.\e[0m"
 systemctl restart star-burger.service
