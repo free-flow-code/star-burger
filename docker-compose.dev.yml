@@ -1,0 +1,45 @@
+version: '3.9'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+    container_name: star-burger-frontend
+    command: bash -c "
+        ./node_modules/.bin/parcel build bundles-src/index.js --dist-dir bundles --no-source-maps --no-cache"
+    volumes:
+      - static_volume:/opt/star-burger/backend/static
+      - bundles_volume:/opt/star-burger/backend/bundles
+    depends_on:
+      - db
+  db:
+    image: postgres:14.10
+    container_name: star-burger-db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    restart: always
+    env_file:
+      - ./backend/.env
+    ports:
+      - "5432:5432"
+  backend:
+    build: ./backend
+    container_name: star-burger-backend
+    command: >
+      sh -c "python3 /opt/star-burger/backend/manage.py migrate &&
+      python3 /opt/star-burger/backend/manage.py runserver 0.0.0.0:8080"
+    volumes:
+      - .:/opt/star-burger/
+      - static_volume:/opt/star-burger/backend/static
+      - media_volume:/opt/star-burger/backend/media
+      - bundles_volume:/opt/star-burger/backend/bundles
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:
+  bundles_volume:

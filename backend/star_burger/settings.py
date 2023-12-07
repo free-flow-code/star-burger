@@ -13,7 +13,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 SECRET_KEY = env('SECRET_KEY', get_random_secret_key())
 DEBUG = env.bool('DEBUG', False)
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', ['127.0.0.1', 'localhost'])
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', ['127.0.0.1', 'localhost', '0.0.0.0', '::1'])
 
 try:
     ROLLBAR = {
@@ -100,6 +100,17 @@ DATABASES = {
         conn_health_checks=True,
     )
 }
+
+'''DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': env('POSTGRES_DB'),
+        'USER': env('POSTGRES_USER'),
+        'PASSWORD': env('POSTGRES_PASSWORD'),
+        'HOST': env('POSTGRES_HOST'),
+        'PORT': env('POSTGRES_PORT'),
+    }
+}'''
 
 AUTH_PASSWORD_VALIDATORS = [
     {
